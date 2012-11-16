@@ -1,0 +1,8 @@
+DaoType=S2JDBC
+DefaultResourcePath=/EcomClient/src/main/resources
+DefaultRootPackage=jp.go.bosai.saigaitask
+DefaultSrcPath=/EcomClient/src/main/java
+ServletPath=/EcomClient
+ViewType=SA-Struts
+WebContentsRoot=src/main/webapp/
+eclipse.preferences.version=1
