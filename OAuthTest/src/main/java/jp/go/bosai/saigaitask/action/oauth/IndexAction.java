@@ -15,13 +15,13 @@
  */
 package jp.go.bosai.saigaitask.action.oauth;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.Resource;
 import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpSession;
 
 import jp.go.bosai.saigaitask.dto.oauth.OAuthDto;
 import jp.go.bosai.saigaitask.form.oauth.OAuthForm;
@@ -39,8 +39,6 @@ import org.seasar.struts.annotation.Execute;
 public class IndexAction {
 
 	@Resource protected ServletRequest request;
-	@Resource protected ServletResponse response;
-	@Resource protected HttpSession session;
 
 	@Resource public OAuthDto oAuthDto;
 	@Resource protected OAuthService oAuthService;
@@ -119,7 +117,14 @@ public class IndexAction {
 		return "/oauth";
 	}
 
-	@Execute(validator = false)
+	@Execute(validator = false, redirect = true, urlPattern="authorized/delete/{oauthId}")
+	public String deleteAuthorized() {
+		int oauthId = Integer.parseInt((String) request.getParameter("oauthId"));
+		oAuthDto.authorizedList.remove(oauthId);
+		return "/oauth";
+	}
+
+		@Execute(validator = false)
 	public String api() {
 
 		int oauthId = Integer.parseInt((String) request.getParameter("oauthId"));
@@ -127,8 +132,9 @@ public class IndexAction {
 		String method = request.getParameter("method");
 		String query = request.getParameter("query");
 		System.out.println("query: "+query);
-		Map<String, String> parameters = new HashMap<String, String>();
+		Collection<? extends Entry<String, String>> parameters = null;
 		if(StringUtil.isNotEmpty(query)) {
+			Map<String, String> params = new HashMap<String, String>();
 			String[] paramArray = query.split("&");
 			for(String param : paramArray) {
 				String key = null, value = null;
@@ -149,9 +155,10 @@ public class IndexAction {
 					else {
 						key = param;
 					}
-					parameters.put(key, value);
+					params.put(key, value);
 				}
 			}
+			if(0<params.size()) parameters = params.entrySet();
 		}
 
 		OAuthForm oAuthForm = oAuthDto.authorizedList.get(oauthId);
@@ -171,7 +178,7 @@ public class IndexAction {
 		// provider
 		oAuthService.provider = new OAuthServiceProvider(oAuthForm.requestTokenURL, oAuthForm.authorizeURL, oAuthForm.accessTokenURL);
 
-		apiResult = oAuthService.api(method, url, parameters.entrySet(), oAuthForm.accessToken, oAuthForm.tokenSecret);
+		apiResult = oAuthService.api(method, url, parameters, oAuthForm.accessToken, oAuthForm.tokenSecret);
 
 		return "/oauth";
 	}

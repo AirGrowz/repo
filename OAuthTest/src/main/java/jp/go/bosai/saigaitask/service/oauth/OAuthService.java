@@ -7,9 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpSession;
-
 import net.oauth.OAuth;
 import net.oauth.OAuthAccessor;
 import net.oauth.OAuthConsumer;
@@ -26,8 +23,6 @@ import net.oauth.http.HttpResponseMessage;
  * OAuth認証を行うサービスクラスです.
  */
 public class OAuthService {
-
-	@Resource protected HttpSession session;
 
 	public String consumerKey;
 	public String consumerSecret;
@@ -59,8 +54,6 @@ public class OAuthService {
 			redirectTo = OAuth.addParameters(accessor.consumer.serviceProvider.userAuthorizationURL, OAuth.OAUTH_TOKEN, accessor.requestToken);
 			System.out.println(OAuth.OAUTH_TOKEN+"(RequestToken): "+accessor.requestToken);
 			System.out.println(OAuth.OAUTH_TOKEN_SECRET+": "+accessor.tokenSecret);
-			session.setAttribute(OAuth.OAUTH_TOKEN, accessor.requestToken);
-			session.setAttribute(OAuth.OAUTH_TOKEN_SECRET, accessor.tokenSecret);
 		} catch(IOException e) {
 			e.printStackTrace();
 		} catch (OAuthException e) {

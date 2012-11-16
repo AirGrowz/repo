@@ -145,7 +145,7 @@
 						<td>${service.accessTokenURL}</td>
 						<td>${service.accessToken}</td>
 						<td>${service.tokenSecret}</td>
-						<td><input type="button" value="削除" onclick="location.href='service/delete/${status.index}';"/></td>
+						<td><input type="button" value="削除" onclick="location.href='authorized/delete/${status.index}';"/></td>
 					</tr>
 				</c:forEach>
 			</table>
