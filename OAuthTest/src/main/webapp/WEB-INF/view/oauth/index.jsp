@@ -51,18 +51,32 @@
 		<form>
 			<table border="1">
 				<tr>
-					<th>サービス名称</th>
-					<th>Consumer Key</th>
-					<th>Consumer Secret</th>
-					<th>Request Token URL</th>
-					<th>Authorize URL</th>
-					<th>Access Token URL</th>
+					<th>No.</th>
+					<th>サービス名称<br/>(oauth_provider_name)</th>
+					<th>Consumer Key<br/>(oauth_consumer_key)</th>
+					<th>Consumer Secret<br/>(oauth_consumer_secret)</th>
+					<th>Request Token URL<br/>(oauth_request_token_url)</th>
+					<th>Authorize URL<br/>(oauth_authorize_url)</th>
+					<th>Access Token URL<br/>(oauth_access_token_url)</th>
+					<th>Delete</th>
 				</tr>
+				<c:forEach var="service" items="${oAuthDto.serviceList}" varStatus="status">
+					<tr>
+						<td>${status.index}</td>
+						<td>${service.serviceName}</td>
+						<td>${service.consumerKey}</td>
+						<td>${service.consumerSecret}</td>
+						<td>${service.requestTokenURL}</td>
+						<td>${service.authorizeURL}</td>
+						<td>${service.accessTokenURL}</td>
+						<td><input type="button" value="削除" onclick="location.href='service/delete/${status.index}';"/></td>
+					</tr>
+				</c:forEach>
 			</table>
 		</form>
 
 		<div>アクセスコードを取得する</div>
-		<form action="${f:url('/oauth/requestToken')}"target="_blank">
+		<form action="${f:url('/oauth/requestToken')}" target="_blank">
 			<table border="1">
 				<tr>
 					<th>Key</th>
@@ -72,8 +86,9 @@
 					<td>サービスを選択する</td>
 					<td>
 						<select name="serviceId">
-							<option value="1">eコミマップ</option>
-							<option value="2">Twitter</option>
+							<c:forEach var="service" items="${oAuthDto.serviceList}" varStatus="status">
+								<option value="${status.index}">${service.serviceName}</option>
+							</c:forEach>
 						</select>
 					</td>
 				</tr>
@@ -88,7 +103,7 @@
 		</form>
 
 		<div>認証する</div>
-		<form>
+		<form action="${f:url('/oauth/accessToken')}">
 			<table border="1">
 				<tr>
 					<th>Key</th>
@@ -108,11 +123,72 @@
 		<form>
 			<table border="1">
 				<tr>
-					<th>サービス名称</th>
-					<th>ログインユーザ</th>
+					<th>No.</th>
+					<th>サービス名称<br/>(oauth_provider_name)</th>
+					<th>Consumer Key<br/>(oauth_consumer_key)</th>
+					<th>Consumer Secret<br/>(oauth_consumer_secret)</th>
+					<th>Request Token URL<br/>(oauth_request_token_url)</th>
+					<th>Authorize URL<br/>(oauth_authorize_url)</th>
+					<th>Access Token URL<br/>(oauth_access_token_url)</th>
+					<th>Access Token<br/>(oauth_token)</th>
+					<th>Token Secret<br/>(oauth_token_secret)</th>
+					<th>Delete</th>
+				</tr>
+				<c:forEach var="service" items="${oAuthDto.authorizedList}" varStatus="status">
+					<tr>
+						<td>${status.index}</td>
+						<td>${service.serviceName}</td>
+						<td>${service.consumerKey}</td>
+						<td>${service.consumerSecret}</td>
+						<td>${service.requestTokenURL}</td>
+						<td>${service.authorizeURL}</td>
+						<td>${service.accessTokenURL}</td>
+						<td>${service.accessToken}</td>
+						<td>${service.tokenSecret}</td>
+						<td><input type="button" value="削除" onclick="location.href='service/delete/${status.index}';"/></td>
+					</tr>
+				</c:forEach>
+			</table>
+		</form>
+
+		<div>APIをリクエストする</div>
+		<form action="${f:url('/oauth/api')}" method="POST">
+			<table border="1">
+				<tr>
+					<th>Key</th>
+					<th>Value</th>
+				</tr>
+				<tr>
+					<td>認証情報を選択する</td>
+					<td>
+						<select name="oauthId">
+							<c:forEach var="service" items="${oAuthDto.authorizedList}" varStatus="status">
+								<option value="${status.index}">${service.serviceName}</option>
+							</c:forEach>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td>API URL</td>
+					<td><input type="text" name="apiURL"/></td>
+				</tr>
+				<tr>
+					<td>HTTP method</td>
+					<td><input type="text" name="method" value="GET"/></td>
+				</tr>
+				<tr>
+					<td>Query</td>
+					<td><input type="text" name="query"/></td>
+				</tr>
+				<tr style="text-align:center;">
+					<td colspan="2"><input type="submit" value="APIをリクエストする"/></td>
 				</tr>
 			</table>
 		</form>
 
+		<c:if test="${apiResult!=null}">
+			<div>APIの結果</div>
+			<div style="height: 500px; overflow: auto; border: 1px solid gray;">${apiResult}</div>
+		</c:if>
 	</body>
 </html>

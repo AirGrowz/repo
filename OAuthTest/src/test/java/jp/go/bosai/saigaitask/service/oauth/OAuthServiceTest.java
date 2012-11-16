@@ -92,7 +92,7 @@ public class OAuthServiceTest extends S2TestCase {
 
 		// check ecommap api version;
 		ecommapAPIService.ecomServer = ecomServer;
-		String jsonStr = oAuthService.api(ecommapAPIService.getVersion());
+		String jsonStr = oAuthService.api("GET", ecommapAPIService.getVersion(), null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
 
 		// print json
 		JSONObject json = new JSONObject(jsonStr);
@@ -110,13 +110,13 @@ public class OAuthServiceTest extends S2TestCase {
 		String verifier = reader.readLine();
 
 		// get access token
-		oAuthService.getAccessToken(verifier);
+		oAuthService.getAccessToken(verifier, oAuthService.accessor.requestToken, oAuthService.accessor.tokenSecret);
 
 		// api test
-		oAuthService.api(ecommapAPIService.getVersion());
-		oAuthService.api(ecommapAPIService.getWhoAmI());
-		oAuthService.api(ecommapAPIService.getUser(1, 1));
-		oAuthService.api(ecommapAPIService.getGroup(1, 1));
+		oAuthService.api("GET", ecommapAPIService.getVersion(), null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
+		oAuthService.api("GET", ecommapAPIService.getWhoAmI(), null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
+		oAuthService.api("GET", ecommapAPIService.getUser(1, 1), null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
+		oAuthService.api("GET", ecommapAPIService.getGroup(1, 1), null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
 	}
 
 	/**
@@ -138,10 +138,10 @@ public class OAuthServiceTest extends S2TestCase {
 		String verifier = reader.readLine();
 
 		// get access token
-		oAuthService.getAccessToken(verifier);
+		oAuthService.getAccessToken(verifier, oAuthService.accessor.requestToken, oAuthService.accessor.tokenSecret);
 
 		// api test
-		oAuthService.api("https://api.twitter.com/1.1/statuses/mentions_timeline.json");
+		oAuthService.api("GET", "https://api.twitter.com/1.1/statuses/mentions_timeline.json", null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
 	}
 
 	protected void config() throws IOException {

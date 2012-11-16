@@ -1,9 +1,10 @@
 package jp.go.bosai.saigaitask.action.oauth;
 
 import javax.annotation.Resource;
+import javax.servlet.ServletRequest;
 
-import jp.go.bosai.saigaitask.dto.LoginDataDto;
-import jp.go.bosai.saigaitask.form.oauth.ServiceForm;
+import jp.go.bosai.saigaitask.dto.oauth.OAuthDto;
+import jp.go.bosai.saigaitask.form.oauth.OAuthForm;
 
 import org.seasar.struts.annotation.ActionForm;
 import org.seasar.struts.annotation.Execute;
@@ -14,9 +15,10 @@ import org.seasar.struts.annotation.Execute;
 public class ServiceAction {
 
 	@ActionForm
-	@Resource protected ServiceForm serviceForm;
+	@Resource protected OAuthForm oAuthForm;
 
-	@Resource protected LoginDataDto loginDataDto;
+	@Resource protected ServletRequest request;
+	@Resource protected OAuthDto oAuthDto;
 
 	/**
 	 * 新規作成します.
@@ -24,8 +26,13 @@ public class ServiceAction {
 	 */
 	@Execute(validator = false, redirect = true)
 	public String create() {
-		loginDataDto.serviceList.add(serviceForm);
+		oAuthDto.serviceList.add(oAuthForm);
 		return "/oauth";
 	}
 
+	@Execute(validator = false, redirect = true, urlPattern="delete/{serviceId}")
+	public String delete() {
+		oAuthDto.serviceList.remove(oAuthForm.serviceId.intValue());
+		return "/oauth";
+	}
 }

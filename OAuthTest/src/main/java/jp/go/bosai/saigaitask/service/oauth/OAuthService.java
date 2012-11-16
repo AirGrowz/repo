@@ -2,8 +2,10 @@ package jp.go.bosai.saigaitask.service.oauth;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
@@ -34,6 +36,7 @@ public class OAuthService {
 	// OAuth
 	public OAuthClient client = new OAuthClient(new URLConnectionClient());
 	public OAuthServiceProvider provider;
+	public OAuthAccessor accessor;
 
 	/**
 	 * OAuth認証を開始します.
@@ -47,7 +50,7 @@ public class OAuthService {
 		OAuthConsumer consumer = new OAuthConsumer(callbackUrl, consumerKey, consumerSecret, provider);
 
 		// OAuthのアクセサーを作成
-		OAuthAccessor accessor = new OAuthAccessor(consumer);
+		accessor = new OAuthAccessor(consumer);
 
 		String redirectTo = null;
 		try{
@@ -74,16 +77,15 @@ public class OAuthService {
 	 * OAuthサービスプロバイダに認証コードを送信して、
 	 * 認証済みリクエストトークンを交換してアクセストークンを取得します.
 	 * @param verifier 認証コード
+	 * @param requestToken 認証済みリクエストトークン
+	 * @param tokenSecret トークンシークレット
 	 */
-	public void getAccessToken(String verifier) {
-		String requestToken = (String) session.getAttribute(OAuth.OAUTH_TOKEN);
-		String tokenSecret = (String) session.getAttribute(OAuth.OAUTH_TOKEN_SECRET);
-
+	public void getAccessToken(String verifier, String requestToken, String tokenSecret) {
 		// OAuthコンシューマを作成
 		OAuthConsumer consumer = new OAuthConsumer(callbackUrl, consumerKey, consumerSecret, provider);
 
 		// OAuthのアクセサーを作成
-		OAuthAccessor accessor = new OAuthAccessor(consumer);
+		accessor = new OAuthAccessor(consumer);
 		accessor.requestToken = requestToken;
 		accessor.tokenSecret = tokenSecret;
 
@@ -97,8 +99,6 @@ public class OAuthService {
 			response.requireParameters(OAuth.OAUTH_TOKEN, OAuth.OAUTH_TOKEN_SECRET);
 			System.out.println(OAuth.OAUTH_TOKEN+"(AccessToken): "+accessor.accessToken);
 			System.out.println(OAuth.OAUTH_TOKEN_SECRET+": "+accessor.tokenSecret);
-			session.setAttribute(OAuth.OAUTH_TOKEN, accessor.accessToken);
-			session.setAttribute(OAuth.OAUTH_TOKEN_SECRET, accessor.tokenSecret);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (OAuthException e) {
@@ -111,23 +111,23 @@ public class OAuthService {
 	/**
 	 * APIを実行します.
 	 * @param url APIのURL
+	 * @param accessToken アクセストークン
+	 * @param tokenSecret トークンシークレット
 	 * @return String レスポンス
 	 */
-	public String api(String url) {
-		String tokenSecret = (String) session.getAttribute(OAuth.OAUTH_TOKEN_SECRET);
-		String accessToken= (String) session.getAttribute(OAuth.OAUTH_TOKEN);
+	public String api(String method, String url, Collection<? extends Entry<String, String>> parameters, String accessToken, String tokenSecret) {
 
 		// OAuthコンシューマを作成
 		OAuthConsumer consumer = new OAuthConsumer(callbackUrl, consumerKey, consumerSecret, provider);
 
 		// OAuthのアクセサーを作成
 		OAuthAccessor accessor = new OAuthAccessor(consumer);
-		accessor.tokenSecret = tokenSecret;
 		accessor.accessToken = accessToken;
+		accessor.tokenSecret = tokenSecret;
 
 		String ret = null;
 		try {
-			OAuthMessage request = accessor.newRequestMessage(OAuthMessage.GET, url, null);
+			OAuthMessage request = accessor.newRequestMessage(method, url, parameters);
 			OAuthResponseMessage responseMessage = client.access(request, ParameterStyle.AUTHORIZATION_HEADER);
 			int statusCode = responseMessage.getHttpResponse().getStatusCode();
 			System.out.println("API: "+url);
