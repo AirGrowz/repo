@@ -92,31 +92,33 @@ public class OAuthServiceTest extends S2TestCase {
 
 		// check ecommap api version;
 		ecommapAPIService.ecomServer = ecomServer;
-		String jsonStr = oAuthService.api("GET", ecommapAPIService.getVersion(), null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
+		boolean success = oAuthService.api("GET", ecommapAPIService.getVersion(), null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
+		if(success) {
+			String jsonStr = oAuthService.apiResponse.readBodyAsString();
+			// print json
+			JSONObject json = new JSONObject(jsonStr);
+			String[] names = JSONObject.getNames(json);
+			for(String name : names) {
+				System.out.println(name+": "+json.get(name));
+			}
 
-		// print json
-		JSONObject json = new JSONObject(jsonStr);
-		String[] names = JSONObject.getNames(json);
-		for(String name : names) {
-			System.out.println(name+": "+json.get(name));
+			// get unauthorized request token
+			String callbackUrl = oAuthService.getRequestToken();
+
+			// get verifier
+			System.out.println("Access this URL and get OAuth verifier: "+callbackUrl);
+			System.out.print("Input OAuth verifier: ");
+			String verifier = reader.readLine();
+
+			// get access token
+			oAuthService.getAccessToken(verifier, oAuthService.accessor.requestToken, oAuthService.accessor.tokenSecret);
+
+			// api test
+			oAuthService.api("GET", ecommapAPIService.getVersion(), null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
+			oAuthService.api("GET", ecommapAPIService.getWhoAmI(), null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
+			oAuthService.api("GET", ecommapAPIService.getUser(1, 1), null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
+			oAuthService.api("GET", ecommapAPIService.getGroup(1, 1), null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
 		}
-
-		// get unauthorized request token
-		String callbackUrl = oAuthService.getRequestToken();
-
-		// get verifier
-		System.out.println("Access this URL and get OAuth verifier: "+callbackUrl);
-		System.out.print("Input OAuth verifier: ");
-		String verifier = reader.readLine();
-
-		// get access token
-		oAuthService.getAccessToken(verifier, oAuthService.accessor.requestToken, oAuthService.accessor.tokenSecret);
-
-		// api test
-		oAuthService.api("GET", ecommapAPIService.getVersion(), null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
-		oAuthService.api("GET", ecommapAPIService.getWhoAmI(), null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
-		oAuthService.api("GET", ecommapAPIService.getUser(1, 1), null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
-		oAuthService.api("GET", ecommapAPIService.getGroup(1, 1), null, oAuthService.accessor.accessToken, oAuthService.accessor.tokenSecret);
 	}
 
 	/**
