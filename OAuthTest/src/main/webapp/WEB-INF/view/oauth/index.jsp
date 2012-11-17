@@ -76,7 +76,7 @@
 		</form>
 
 		<div>アクセスコードを取得する</div>
-		<form action="${f:url('/oauth/requestToken')}" target="_blank">
+		<form action="${f:url('/oauth/requestRequestToken')}" target="_blank">
 			<table border="1">
 				<tr>
 					<th>Key</th>
@@ -103,7 +103,7 @@
 		</form>
 
 		<div>認証する</div>
-		<form action="${f:url('/oauth/accessToken')}">
+		<form action="${f:url('/oauth/requestAccessToken')}">
 			<table border="1">
 				<tr>
 					<th>Key</th>
@@ -174,11 +174,11 @@
 				</tr>
 				<tr>
 					<td>HTTP method</td>
-					<td><input type="text" name="method" value="GET"/></td>
+					<td><input type="text" name="apiMethod" value="GET"/></td>
 				</tr>
 				<tr>
 					<td>Query</td>
-					<td><input type="text" name="query"/></td>
+					<td><input type="text" name="apiQuery"/></td>
 				</tr>
 				<tr style="text-align:center;">
 					<td colspan="2"><input type="submit" value="APIをリクエストする"/></td>

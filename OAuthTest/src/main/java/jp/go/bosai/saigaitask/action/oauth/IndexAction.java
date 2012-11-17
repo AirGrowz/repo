@@ -16,8 +16,6 @@
 package jp.go.bosai.saigaitask.action.oauth;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.annotation.Resource;
@@ -30,13 +28,16 @@ import jp.go.bosai.saigaitask.service.oauth.OAuthService;
 import net.oauth.OAuth;
 import net.oauth.OAuthServiceProvider;
 
-import org.seasar.framework.util.StringUtil;
+import org.seasar.struts.annotation.ActionForm;
 import org.seasar.struts.annotation.Execute;
 
 /**
  * OAuth認証のアクションクラスです.
  */
 public class IndexAction {
+
+	@ActionForm
+	@Resource public OAuthForm oAuthForm;
 
 	@Resource protected ServletRequest request;
 
@@ -52,67 +53,67 @@ public class IndexAction {
 	}
 
 	@Execute(validator = false, redirect = true)
-	public String requestToken() {
+	public String requestRequestToken() {
 
-		int serviceId = Integer.parseInt((String) request.getParameter("serviceId"));
+		Integer serviceId = oAuthForm.serviceId;
+		if(serviceId!=null) {
+			OAuthForm oAuthForm = oAuthDto.serviceList.get(serviceId);
 
-		OAuthForm oAuthForm = oAuthDto.serviceList.get(serviceId);
+			// consumer key
+			String consumerKey = oAuthForm.consumerKey;
+			oAuthService.consumerKey = consumerKey;
 
-		// consumer key
-		String consumerKey = oAuthForm.consumerKey;
-		oAuthService.consumerKey = consumerKey;
+			// consumer secret
+			String consumerSecret = oAuthForm.consumerSecret;
+			oAuthService.consumerSecret = consumerSecret;
 
-		// consumer secret
-		String consumerSecret = oAuthForm.consumerSecret;
-		oAuthService.consumerSecret = consumerSecret;
+			// callback url
+			String callbackUrl = null;
+			oAuthService.callbackUrl = callbackUrl;
 
-		// callback url
-		String callbackUrl = null;
-		oAuthService.callbackUrl = callbackUrl;
+			// provider
+			oAuthService.provider = new OAuthServiceProvider(oAuthForm.requestTokenURL, oAuthForm.authorizeURL, oAuthForm.accessTokenURL);
 
-		// provider
-		oAuthService.provider = new OAuthServiceProvider(oAuthForm.requestTokenURL, oAuthForm.authorizeURL, oAuthForm.accessTokenURL);
+			String redirectTo = oAuthService.getRequestToken();
+			oAuthForm.requestToken = oAuthService.accessor.requestToken;
+			oAuthForm.tokenSecret = oAuthService.accessor.tokenSecret;
 
-		String redirectTo = oAuthService.getRequestToken();
-		oAuthForm.requestToken = oAuthService.accessor.requestToken;
-		oAuthForm.tokenSecret = oAuthService.accessor.tokenSecret;
+			oAuthDto.oAuthForm = oAuthForm;
+			return redirectTo;
+		}
 
-		oAuthDto.oAuthForm = oAuthForm;
-
-		return redirectTo;
+		return "/oauth";
 	}
 
 	@Execute(validator = false, redirect = true)
-	public String accessToken() {
-
-		// verifier
-		String verifier = request.getParameter(OAuth.OAUTH_VERIFIER);
+	public String requestAccessToken() {
 
 		OAuthForm oAuthForm = oAuthDto.oAuthForm;
 
-		// consumer key
-		String consumerKey = oAuthForm.consumerKey;
-		oAuthService.consumerKey = consumerKey;
+		if(oAuthForm!=null) {
+			// verifier
+			String verifier = request.getParameter(OAuth.OAUTH_VERIFIER);
 
-		// consumer secret
-		String consumerSecret = oAuthForm.consumerSecret;
-		oAuthService.consumerSecret = consumerSecret;
+			// consumer key
+			String consumerKey = oAuthForm.consumerKey;
+			oAuthService.consumerKey = consumerKey;
 
-		// callback url
-		String callbackUrl = null;
-		oAuthService.callbackUrl = callbackUrl;
+			// consumer secret
+			String consumerSecret = oAuthForm.consumerSecret;
+			oAuthService.consumerSecret = consumerSecret;
 
-		// provider
-		oAuthService.provider = new OAuthServiceProvider(oAuthForm.requestTokenURL, oAuthForm.authorizeURL, oAuthForm.accessTokenURL);
+			// provider
+			oAuthService.provider = new OAuthServiceProvider(oAuthForm.requestTokenURL, oAuthForm.authorizeURL, oAuthForm.accessTokenURL);
 
-		oAuthService.getAccessToken(verifier, oAuthForm.requestToken, oAuthForm.tokenSecret);
-		oAuthForm.accessToken = oAuthService.accessor.accessToken;
-		oAuthForm.tokenSecret = oAuthService.accessor.tokenSecret;
+			oAuthService.getAccessToken(verifier, oAuthForm.requestToken, oAuthForm.tokenSecret);
+			oAuthForm.accessToken = oAuthService.accessor.accessToken;
+			oAuthForm.tokenSecret = oAuthService.accessor.tokenSecret;
 
-		// 認証中のデータを削除する
-		oAuthDto.oAuthForm = null;
-		// 認証済みリストに追加する
-		oAuthDto.authorizedList.add(oAuthForm);
+			// 認証中のデータを削除する
+			oAuthDto.oAuthForm = null;
+			// 認証済みリストに追加する
+			oAuthDto.authorizedList.add(oAuthForm);
+		}
 
 		return "/oauth";
 	}
@@ -124,42 +125,13 @@ public class IndexAction {
 		return "/oauth";
 	}
 
-		@Execute(validator = false)
+	@Execute(validator = false)
 	public String api() {
 
-		int oauthId = Integer.parseInt((String) request.getParameter("oauthId"));
-		String url = request.getParameter("apiURL");
-		String method = request.getParameter("method");
-		String query = request.getParameter("query");
-		System.out.println("query: "+query);
-		Collection<? extends Entry<String, String>> parameters = null;
-		if(StringUtil.isNotEmpty(query)) {
-			Map<String, String> params = new HashMap<String, String>();
-			String[] paramArray = query.split("&");
-			for(String param : paramArray) {
-				String key = null, value = null;
-				if(StringUtil.isNotEmpty(param)) {
-					int pos = param.indexOf("=");
-					if(pos!=-1) {
-						String[] kv = param.split("=");
-						if(pos==0) {
-							value = kv[0];
-						}
-						else {
-							key = kv[0];
-							if(kv.length==2) {
-								value = kv[1];
-							}
-						}
-					}
-					else {
-						key = param;
-					}
-					params.put(key, value);
-				}
-			}
-			if(0<params.size()) parameters = params.entrySet();
-		}
+		Integer oauthId = oAuthForm.oauthId;
+		String url = oAuthForm.apiURL;
+		String method = oAuthForm.apiMethod;
+		Collection<? extends Entry<String, String>> parameters = oAuthForm.getApiQueryParameters();
 
 		OAuthForm oAuthForm = oAuthDto.authorizedList.get(oauthId);
 
@@ -170,10 +142,6 @@ public class IndexAction {
 		// consumer secret
 		String consumerSecret = oAuthForm.consumerSecret;
 		oAuthService.consumerSecret = consumerSecret;
-
-		// callback url
-		String callbackUrl = null;
-		oAuthService.callbackUrl = callbackUrl;
 
 		// provider
 		oAuthService.provider = new OAuthServiceProvider(oAuthForm.requestTokenURL, oAuthForm.authorizeURL, oAuthForm.accessTokenURL);
