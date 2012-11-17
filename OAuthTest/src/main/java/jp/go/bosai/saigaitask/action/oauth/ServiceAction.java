@@ -30,6 +30,10 @@ public class ServiceAction {
 		return "/oauth";
 	}
 
+	/**
+	 * 削除します.
+	 * @return String
+	 */
 	@Execute(validator = false, redirect = true, urlPattern="delete/{serviceId}")
 	public String delete() {
 		oAuthDto.serviceList.remove(oAuthForm.serviceId.intValue());

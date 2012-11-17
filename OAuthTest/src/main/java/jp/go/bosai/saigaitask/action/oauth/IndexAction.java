@@ -15,19 +15,22 @@
  */
 package jp.go.bosai.saigaitask.action.oauth;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Map.Entry;
 
 import javax.annotation.Resource;
-import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 
 import jp.go.bosai.saigaitask.dto.oauth.OAuthDto;
 import jp.go.bosai.saigaitask.form.oauth.OAuthForm;
 import jp.go.bosai.saigaitask.service.oauth.EcommapAPIService;
 import jp.go.bosai.saigaitask.service.oauth.OAuthService;
-import net.oauth.OAuth;
 import net.oauth.OAuthServiceProvider;
 
+import org.apache.commons.io.IOUtils;
+import org.seasar.framework.util.StringUtil;
 import org.seasar.struts.annotation.ActionForm;
 import org.seasar.struts.annotation.Execute;
 
@@ -39,19 +42,21 @@ public class IndexAction {
 	@ActionForm
 	@Resource public OAuthForm oAuthForm;
 
-	@Resource protected ServletRequest request;
+	@Resource protected ServletResponse response;
 
 	@Resource public OAuthDto oAuthDto;
 	@Resource protected OAuthService oAuthService;
 	@Resource protected EcommapAPIService ecommapAPIService;
-
-	public String apiResult;
 
 	@Execute(validator = false)
 	public String index() {
 		return "index.jsp";
 	}
 
+	/**
+	 * OAuth認証のリクエストトークンをサーバから取得します.
+	 * @return String
+	 */
 	@Execute(validator = false, redirect = true)
 	public String requestRequestToken() {
 
@@ -67,10 +72,6 @@ public class IndexAction {
 			String consumerSecret = oAuthForm.consumerSecret;
 			oAuthService.consumerSecret = consumerSecret;
 
-			// callback url
-			String callbackUrl = null;
-			oAuthService.callbackUrl = callbackUrl;
-
 			// provider
 			oAuthService.provider = new OAuthServiceProvider(oAuthForm.requestTokenURL, oAuthForm.authorizeURL, oAuthForm.accessTokenURL);
 
@@ -85,14 +86,19 @@ public class IndexAction {
 		return "/oauth";
 	}
 
+	/**
+	 * OAuth認証のアクセストークンをサーバから取得します.
+	 * @return String
+	 */
 	@Execute(validator = false, redirect = true)
 	public String requestAccessToken() {
 
 		OAuthForm oAuthForm = oAuthDto.oAuthForm;
 
 		if(oAuthForm!=null) {
+
 			// verifier
-			String verifier = request.getParameter(OAuth.OAUTH_VERIFIER);
+			String verifier = this.oAuthForm.verifier;
 
 			// consumer key
 			String consumerKey = oAuthForm.consumerKey;
@@ -118,13 +124,21 @@ public class IndexAction {
 		return "/oauth";
 	}
 
+	/**
+	 * 認証済みリストから指定IDのデータを削除します.
+	 * @return String
+	 */
 	@Execute(validator = false, redirect = true, urlPattern="authorized/delete/{oauthId}")
 	public String deleteAuthorized() {
-		int oauthId = Integer.parseInt((String) request.getParameter("oauthId"));
-		oAuthDto.authorizedList.remove(oauthId);
+		Integer oauthId = oAuthForm.oauthId;
+		oAuthDto.authorizedList.remove(oauthId.intValue());
 		return "/oauth";
 	}
 
+	/**
+	 * OAuth認証でAPIを利用します.
+	 * @return String
+	 */
 	@Execute(validator = false)
 	public String api() {
 
@@ -133,20 +147,32 @@ public class IndexAction {
 		String method = oAuthForm.apiMethod;
 		Collection<? extends Entry<String, String>> parameters = oAuthForm.getApiQueryParameters();
 
-		OAuthForm oAuthForm = oAuthDto.authorizedList.get(oauthId);
+		if(StringUtil.isNotEmpty(url)) {
+			OAuthForm oAuthForm = oAuthDto.authorizedList.get(oauthId);
 
-		// consumer key
-		String consumerKey = oAuthForm.consumerKey;
-		oAuthService.consumerKey = consumerKey;
+			// consumer key
+			String consumerKey = oAuthForm.consumerKey;
+			oAuthService.consumerKey = consumerKey;
 
-		// consumer secret
-		String consumerSecret = oAuthForm.consumerSecret;
-		oAuthService.consumerSecret = consumerSecret;
+			// consumer secret
+			String consumerSecret = oAuthForm.consumerSecret;
+			oAuthService.consumerSecret = consumerSecret;
 
-		// provider
-		oAuthService.provider = new OAuthServiceProvider(oAuthForm.requestTokenURL, oAuthForm.authorizeURL, oAuthForm.accessTokenURL);
+			// provider
+			oAuthService.provider = new OAuthServiceProvider(oAuthForm.requestTokenURL, oAuthForm.authorizeURL, oAuthForm.accessTokenURL);
 
-		apiResult = oAuthService.api(method, url, parameters, oAuthForm.accessToken, oAuthForm.tokenSecret);
+			boolean success = oAuthService.api(method, url, parameters, oAuthForm.accessToken, oAuthForm.tokenSecret);
+			if(success) {
+				response.setContentType("application/octet-stream");
+				try {
+					InputStream is = oAuthService.apiResponse.getBodyAsStream();
+					IOUtils.copy(is, response.getOutputStream());
+					response.flushBuffer();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 
 		return "/oauth";
 	}

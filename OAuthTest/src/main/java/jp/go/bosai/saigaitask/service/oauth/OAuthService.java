@@ -32,6 +32,7 @@ public class OAuthService {
 	public OAuthClient client = new OAuthClient(new URLConnectionClient());
 	public OAuthServiceProvider provider;
 	public OAuthAccessor accessor;
+	public OAuthResponseMessage apiResponse;
 
 	/**
 	 * OAuth認証を開始します.
@@ -106,9 +107,9 @@ public class OAuthService {
 	 * @param url APIのURL
 	 * @param accessToken アクセストークン
 	 * @param tokenSecret トークンシークレット
-	 * @return String レスポンス
+	 * @return boolean success
 	 */
-	public String api(String method, String url, Collection<? extends Entry<String, String>> parameters, String accessToken, String tokenSecret) {
+	public boolean api(String method, String url, Collection<? extends Entry<String, String>> parameters, String accessToken, String tokenSecret) {
 
 		// OAuthコンシューマを作成
 		OAuthConsumer consumer = new OAuthConsumer(callbackUrl, consumerKey, consumerSecret, provider);
@@ -118,15 +119,18 @@ public class OAuthService {
 		accessor.accessToken = accessToken;
 		accessor.tokenSecret = tokenSecret;
 
-		String ret = null;
+		apiResponse = null;
+
 		try {
 			OAuthMessage request = accessor.newRequestMessage(method, url, parameters);
 			OAuthResponseMessage responseMessage = client.access(request, ParameterStyle.AUTHORIZATION_HEADER);
 			int statusCode = responseMessage.getHttpResponse().getStatusCode();
 			System.out.println("API: "+url);
+			System.out.println("body type: "+responseMessage.getBodyType());
+			System.out.println("body encoding: "+responseMessage.getBodyEncoding());
 			if(statusCode == HttpResponseMessage.STATUS_OK) {
-				String body = ret = responseMessage.readBodyAsString();
-				System.out.println(body);
+				apiResponse = responseMessage;
+				return true;
 			}
 			else {
 				System.out.println("API Error: "+statusCode);
@@ -139,7 +143,7 @@ public class OAuthService {
 			e.printStackTrace();
 		}
 
-		return ret;
+		return false;
 	}
 
 }

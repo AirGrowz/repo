@@ -15,7 +15,7 @@ public class OAuthForm implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	//===============================================
-	// OAuth サービスプロバイダ
+	// OAuth サービスプロバイダ情報
 	//===============================================
 	/** WebサービスID */
 	public Integer serviceId;
@@ -35,14 +35,14 @@ public class OAuthForm implements Serializable {
 	/** 認証URL */
 	public String authorizeURL;
 
+	/** アクセストークンURL */
+	public String accessTokenURL;
+
 	//===============================================
 	// OAuth 認証情報
 	//===============================================
 	/** OAuth認証ID */
 	public Integer oauthId;
-
-	/** アクセストークン */
-	public String accessTokenURL;
 
 	/** リクエストトークン */
 	public String requestToken;
@@ -52,6 +52,9 @@ public class OAuthForm implements Serializable {
 
 	/** アクセストークン */
 	public String accessToken;
+
+	/** 認証コード */
+	public String verifier;
 
 	//===============================================
 	// OAuth API情報
