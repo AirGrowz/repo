@@ -25,7 +25,6 @@ import javax.servlet.ServletResponse;
 
 import jp.go.bosai.saigaitask.dto.oauth.OAuthDto;
 import jp.go.bosai.saigaitask.form.oauth.OAuthForm;
-import jp.go.bosai.saigaitask.service.oauth.EcommapAPIService;
 import jp.go.bosai.saigaitask.service.oauth.OAuthService;
 import net.oauth.OAuthServiceProvider;
 
@@ -36,6 +35,8 @@ import org.seasar.struts.annotation.Execute;
 
 /**
  * OAuth認証のアクションクラスです.
+ * TODO: HTTPリクエストパラメータをチェックする
+ * TODO: OAuthServiceにOAuthFormを渡すだけで実行できるように修正する
  */
 public class IndexAction {
 
@@ -46,7 +47,6 @@ public class IndexAction {
 
 	@Resource public OAuthDto oAuthDto;
 	@Resource protected OAuthService oAuthService;
-	@Resource protected EcommapAPIService ecommapAPIService;
 
 	@Execute(validator = false)
 	public String index() {
